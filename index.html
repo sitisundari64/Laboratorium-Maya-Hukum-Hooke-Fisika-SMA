@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorium Maya · Hukum Hooke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F3EFE2;
+    --paper-line: #C9D3D6;
+    --ink: #1F2A3C;
+    --ink-soft: #56637A;
+    --brass: #B07C3A;
+    --brass-dark: #8C6229;
+    --brick: #A6452F;
+    --green: #3E6B4F;
+    --panel: #FFFFFF;
+    --shadow: 0 1px 0 rgba(31,42,60,0.06), 0 8px 24px rgba(31,42,60,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--paper-line) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px) 0 0/28px 28px,
+      var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:1180px;margin:0 auto;padding:28px 22px 60px;}
+
+  header.hero{margin-bottom:26px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--brass-dark);
+    font-weight:600;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--brass);display:inline-block;}
+  h1{
+    font-family:'Spectral', serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,42px);
+    margin:8px 0 6px;
+    line-height:1.1;
+  }
+  .sub{color:var(--ink-soft); font-size:15.5px; max-width:640px; line-height:1.55;}
+
+  main.grid{
+    display:grid;
+    grid-template-columns: 400px 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 900px){
+    main.grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(31,42,60,0.06);
+    padding:20px;
+  }
+  .panel h2{
+    font-family:'Spectral', serif;
+    font-size:19px;
+    margin:0 0 4px;
+    font-weight:600;
+  }
+  .panel .hint{color:var(--ink-soft); font-size:13px; margin:0 0 16px; line-height:1.5;}
+
+  /* ---------- APPARATUS ---------- */
+  .apparatus-stage{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    padding:6px 0 4px;
+  }
+  .stand-wrap{position:relative;}
+  svg#springSvg{display:block;}
+  .reading-box{
+    font-family:'IBM Plex Mono', monospace;
+    background:#FBF8F1;
+    border:1px dashed var(--paper-line);
+    border-radius:8px;
+    padding:10px 12px;
+    margin-top:14px;
+    font-size:13px;
+    color:var(--ink);
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .reading-box b{color:var(--brick); font-size:15px;}
+
+  .weight-tray{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--paper-line);
+  }
+  .weight-tray p.label{
+    font-size:12px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--ink-soft); font-weight:600; margin:0 0 10px;
+  }
+  .weights{display:flex; flex-wrap:wrap; gap:10px;}
+  .weight-chip{
+    font-family:'IBM Plex Mono', monospace;
+    background:linear-gradient(180deg,#D9A45E,var(--brass));
+    color:#3A2A0F;
+    border:none;
+    border-radius:9px;
+    padding:10px 6px;
+    width:64px;
+    font-weight:600;
+    font-size:13px;
+    cursor:grab;
+    box-shadow:0 3px 0 var(--brass-dark), 0 4px 8px rgba(0,0,0,0.15);
+    transition:transform .12s ease;
+  }
+  .weight-chip:active{cursor:grabbing;}
+  .weight-chip:hover{transform:translateY(-2px);}
+  .weight-chip.selected{outline:2px solid var(--brick); outline-offset:2px;}
+  .weight-chip:disabled{opacity:.35; cursor:not-allowed; transform:none;}
+
+  .apparatus-actions{display:flex; gap:8px; margin-top:14px;}
+
+  button.btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    border:none;
+    border-radius:8px;
+    padding:10px 14px;
+    cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  button.btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--ink); color:#fff;}
+  .btn-primary:hover{filter:brightness(1.15);}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--paper-line);}
+  .btn-ghost:hover{background:#F3EFE2;}
+  .btn-brick{background:var(--brick); color:#fff;}
+  .btn-brick:hover{filter:brightness(1.1);}
+  .btn-full{width:100%; justify-content:center;}
+  button.btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* ---------- NOTEBOOK ---------- */
+  .student-row{
+    display:grid;
+    grid-template-columns:1.3fr .8fr 1fr;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .student-row label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--ink-soft); font-weight:600; display:block; margin-bottom:5px;
+  }
+  .student-row input{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    border:1px solid var(--paper-line);
+    border-radius:7px;
+    padding:8px 10px;
+    background:#FBF8F1;
+    color:var(--ink);
+  }
+  .student-row input:focus{outline:2px solid var(--brass); outline-offset:1px;}
+
+  table#dataTable{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    margin-bottom:18px;
+  }
+  table#dataTable thead th{
+    text-align:left;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    border-bottom:2px solid var(--ink);
+    padding:7px 8px;
+  }
+  table#dataTable td{
+    padding:7px 8px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  table#dataTable tr.empty-row td{
+    color:var(--ink-soft);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-style:italic;
+    text-align:center;
+    padding:16px 8px;
+  }
+
+  .graph-wrap{
+    background:#FBF8F1;
+    border:1px solid var(--paper-line);
+    border-radius:10px;
+    padding:10px;
+    margin-bottom:18px;
+  }
+  canvas#graphCanvas{display:block; width:100%; height:auto;}
+
+  .result-card{
+    background:linear-gradient(135deg, #EFF5F0, #E6EFE8);
+    border:1px solid #CFE0D4;
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .result-card .k-label{font-size:12.5px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.06em;}
+  .result-card .k-value{
+    font-family:'Spectral', serif;
+    font-weight:700;
+    font-size:26px;
+    color:var(--green);
+  }
+  .result-card .k-formula{font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft);}
+
+  .conclusion{
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--ink);
+    background:#FBF8F1;
+    border-left:3px solid var(--brass);
+    padding:10px 14px;
+    border-radius:0 8px 8px 0;
+    margin-bottom:18px;
+  }
+  .conclusion b{color:var(--brick);}
+
+  .export-row{display:flex; gap:10px; flex-wrap:wrap;}
+
+  footer.note{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12px;
+    margin-top:30px;
+    padding-top:16px;
+    border-top:1px solid var(--paper-line);
+    font-family:'IBM Plex Mono', monospace;
+    line-height:1.7;
+  }
+  footer.note .copyright{
+    display:block;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    opacity:.85;
+  }
+
+  .force-arrow{transform-origin:center; }
+
+  @media (max-width:480px){
+    .student-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="eyebrow">Fisika SMA · Percobaan Elastisitas</div>
+    <h1>Laboratorium Maya — Hukum Hooke</h1>
+    <p class="sub">Gantungkan beban pada pegas, amati pertambahan panjangnya, lalu temukan sendiri konstanta pegas (k) dari kemiringan grafik F terhadap Δx.</p>
+  </header>
+
+  <main class="grid">
+
+    <!-- APPARATUS PANEL -->
+    <section class="panel">
+      <h2>Set Alat</h2>
+      <p class="hint">Klik salah satu beban di bawah untuk menggantungkannya pada ujung pegas.</p>
+
+      <div class="apparatus-stage">
+        <div class="stand-wrap" id="standWrap"></div>
+      </div>
+
+      <div class="reading-box">
+        <span>Beban terpasang: <b id="currentMassLabel">—</b></span>
+        <span>Bacaan penggaris: <b id="currentReadingLabel">0,0 cm</b></span>
+      </div>
+
+      <div class="weight-tray">
+        <p class="label">Pilih beban (gram)</p>
+        <div class="weights" id="weightTray"></div>
+      </div>
+
+      <div class="apparatus-actions">
+        <button class="btn btn-ghost" id="releaseBtn">Lepas beban</button>
+        <button class="btn btn-ghost" id="resetAllBtn">Reset semua data</button>
+      </div>
+    </section>
+
+    <!-- NOTEBOOK PANEL -->
+    <section class="panel">
+      <h2>Buku Catatan Praktikum</h2>
+      <p class="hint">Data akan terisi otomatis setiap kali sebuah beban selesai digantung dan pegas berhenti bergerak.</p>
+
+      <div class="student-row">
+        <div><label for="stuName">Nama</label><input id="stuName" type="text" placeholder="Nama siswa"></div>
+        <div><label for="stuClass">Kelas</label><input id="stuClass" type="text" placeholder="mis. XI-IPA 2"></div>
+        <div><label for="stuDate">Tanggal</label><input id="stuDate" type="date"></div>
+      </div>
+
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Massa (g)</th>
+            <th>Gaya F = m·g (N)</th>
+            <th>Posisi Akhir (cm)</th>
+            <th>Δx (cm)</th>
+            <th>Δx (m)</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody">
+          <tr class="empty-row"><td colspan="6">Belum ada data — gantungkan beban pertama untuk memulai.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="graph-wrap">
+        <canvas id="graphCanvas" width="720" height="360"></canvas>
+      </div>
+
+      <div class="result-card">
+        <div>
+          <div class="k-label">Konstanta Pegas (Gradien Grafik)</div>
+          <div class="k-value" id="kValue">—</div>
+        </div>
+        <div class="k-formula">F = k · Δx</div>
+      </div>
+
+      <div class="conclusion" id="conclusionText">
+        Kumpulkan minimal dua data (dua beban berbeda) agar grafik dan nilai k dapat dihitung.
+      </div>
+
+      <div class="export-row">
+        <button class="btn btn-brick" id="downloadPdfBtn">⬇ Unduh Laporan (PDF)</button>
+        <button class="btn btn-ghost" id="printBtn">Cetak Halaman</button>
+      </div>
+      <p class="hint" id="pdfFallbackHint" style="display:none; margin-top:10px;">
+        Jika file PDF tidak otomatis tersimpan (sering terjadi saat halaman ini ditampilkan sebagai pratinjau di dalam obrolan),
+        <a id="pdfFallbackLink" href="#" target="_blank" style="color:var(--brick); font-weight:600;">klik di sini untuk membuka PDF di tab baru</a>,
+        lalu simpan dari sana menggunakan tombol unduh/simpan pada penampil PDF browser Anda.
+      </p>
+    </section>
+
+  </main>
+
+  <footer class="note">
+    Laboratorium Maya Fisika · Percobaan Hukum Hooke — g diasumsikan 10 m/s²
+    <span class="copyright">© 2025 Siti Sundari, M.Pd. — Hak cipta dilindungi.</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============ CONFIG ============ */
+  const G = 10;                 // m/s^2 (simplifikasi SMA)
+  const K_TRUE = 25;             // N/m -- konstanta "asli" pegas tersembunyi
+  const MASSES = [50,100,150,200,250]; // gram
+  const PX_PER_CM = 11;
+  const NATURAL_LEN_PX = 70;     // panjang alami pegas dalam px
+  const RULER_TOP_PAD = 46;      // ruang di atas titik nol penggaris
+
+  /* deterministic small measurement noise, in cm */
+  function noiseFor(mass){
+    const v = ((mass * 37) % 11) / 11 - 0.5; // -0.5..0.5
+    return Math.round(v * 0.3 * 10) / 10;     // +-0.15 cm-ish, rounded .1
+  }
+
+  function idealDxCm(mass){
+    const F = (mass/1000) * G;
+    return (F / K_TRUE) * 100; // meters -> cm
+  }
+  function measuredDxCm(mass){
+    const dx = idealDxCm(mass) + noiseFor(mass);
+    return Math.max(0, Math.round(dx * 10) / 10);
+  }
+
+  /* ============ STATE ============ */
+  let currentMass = null;
+  let animReq = null;
+  const records = new Map(); // mass -> {mass,F,dxCm}
+
+  /* ============ BUILD APPARATUS SVG ============ */
+  const RULER_CM_MAX = 14;
+  const svgHeight = RULER_TOP_PAD + RULER_CM_MAX*PX_PER_CM + 40;
+  const svgWidth = 210;
+
+  const standWrap = document.getElementById('standWrap');
+  standWrap.innerHTML = `
+    <svg id="springSvg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
+      <!-- top clamp -->
+      <rect x="20" y="4" width="90" height="10" rx="2" fill="#3A2A1E"></rect>
+      <rect x="58" y="0" width="14" height="10" fill="#3A2A1E"></rect>
+
+      <!-- ruler -->
+      <g id="rulerTicks" font-family="IBM Plex Mono, monospace" font-size="9" fill="#56637A"></g>
+      <line x1="150" y1="${RULER_TOP_PAD}" x2="150" y2="${RULER_TOP_PAD + RULER_CM_MAX*PX_PER_CM}" stroke="#C9D3D6" stroke-width="2"></line>
+
+      <!-- spring -->
+      <path id="springPath" d="" stroke="#8C6229" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
+      <!-- hook / weight holder -->
+      <g id="hookGroup">
+        <rect id="hookRect" x="55" y="0" width="20" height="14" rx="3" fill="#B07C3A"></rect>
+        <text id="hookText" x="65" y="10" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8" fill="#3A2A0F" font-weight="600"></text>
+      </g>
+      <!-- pointer to ruler -->
+      <g id="pointerGroup">
+        <polygon points="0,0 10,-5 10,5" fill="#A6452F"></polygon>
+      </g>
+    </svg>
+  `;
+
+  // draw ruler ticks
+  const ticksG = document.getElementById('rulerTicks');
+  for(let cm=0; cm<=RULER_CM_MAX; cm++){
+    const y = RULER_TOP_PAD + cm*PX_PER_CM;
+    const major = cm % 2 === 0;
+    const tickLen = major ? 10 : 6;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', 150-tickLen); line.setAttribute('x2',150);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', major ? '#56637A' : '#C9D3D6');
+    line.setAttribute('stroke-width', major ? 1.4 : 1);
+    ticksG.appendChild(line);
+    if(major){
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', 150-tickLen-4); t.setAttribute('y', y+3); t.setAttribute('text-anchor','end');
+      t.textContent = cm;
+      ticksG.appendChild(t);
+    }
+  }
+
+  const springPath = document.getElementById('springPath');
+  const hookGroup = document.getElementById('hookGroup');
+  const hookRect = document.getElementById('hookRect');
+  const hookText = document.getElementById('hookText');
+  const pointerGroup = document.getElementById('pointerGroup');
+
+  const SPRING_X = 65;
+  const SPRING_TOP_Y = 14;
+
+  function drawSpring(bottomY, coils){
+    coils = coils || 8;
+    const totalLen = bottomY - SPRING_TOP_Y;
+    const leadIn = 8, leadOut = 8;
+    const coilLen = totalLen - leadIn - leadOut;
+    const coilWidth = 16;
+    let d = `M ${SPRING_X} ${SPRING_TOP_Y} L ${SPRING_X} ${SPRING_TOP_Y+leadIn} `;
+    const step = coilLen / (coils*2);
+    let y = SPRING_TOP_Y + leadIn;
+    for(let i=0;i<coils*2;i++){
+      const x = (i % 2 === 0) ? SPRING_X + coilWidth/2 : SPRING_X - coilWidth/2;
+      y += step;
+      d += `L ${x} ${y} `;
+    }
+    d += `L ${SPRING_X} ${bottomY} `;
+    springPath.setAttribute('d', d);
+
+    hookGroup.setAttribute('transform', `translate(0, ${bottomY - 0})`);
+    pointerGroup.setAttribute('transform', `translate(150, ${bottomY})`);
+  }
+
+  const restBottomY = RULER_TOP_PAD + SPRING_TOP_Y * 0 + NATURAL_LEN_PX; // resting bottom (Δx = 0 aligns with ruler 0)
+  // Align: ruler 0 tick is at y = RULER_TOP_PAD. Spring's resting bottom should sit at that same y.
+  function bottomYForDx(dxCm){
+    return RULER_TOP_PAD + dxCm * PX_PER_CM;
+  }
+
+  drawSpring(bottomYForDx(0));
+  hookText.textContent = '';
+
+  function updateReadingLabel(dxCm){
+    document.getElementById('currentReadingLabel').textContent = dxCm.toFixed(1).replace('.',',') + ' cm';
+  }
+  updateReadingLabel(0);
+
+  /* ============ ANIMATION (damped settle) ============ */
+  function animateTo(targetDxCm, mass){
+    if(animReq) cancelAnimationFrame(animReq);
+    const startDx = currentDxCmDisplayed;
+    const duration = 900;
+    const t0 = performance.now();
+
+    function frame(now){
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.exp(-6*p) * Math.cos(11*p);
+      let val = startDx + (targetDxCm - startDx) * eased;
+      if (p >= 1) val = targetDxCm;
+      currentDxCmDisplayed = val;
+      drawSpring(bottomYForDx(val));
+      updateReadingLabel(val);
+      if(p < 1){
+        animReq = requestAnimationFrame(frame);
+      } else {
+        animReq = null;
+        if(mass !== null) onSettled(mass, targetDxCm);
+      }
+    }
+    animReq = requestAnimationFrame(frame);
+  }
+  let currentDxCmDisplayed = 0;
+
+  /* ============ WEIGHT TRAY ============ */
+  const tray = document.getElementById('weightTray');
+  MASSES.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'weight-chip';
+    btn.textContent = m + ' g';
+    btn.dataset.mass = m;
+    btn.addEventListener('click', () => hangWeight(m));
+    tray.appendChild(btn);
+  });
+
+  function setSelectedChip(mass){
+    document.querySelectorAll('.weight-chip').forEach(c=>{
+      c.classList.toggle('selected', Number(c.dataset.mass) === mass);
+    });
+  }
+
+  function hangWeight(mass){
+    currentMass = mass;
+    setSelectedChip(mass);
+    document.getElementById('currentMassLabel').textContent = mass + ' g';
+    hookText.textContent = mass;
+    const target = measuredDxCm(mass);
+    animateTo(target, mass);
+  }
+
+  document.getElementById('releaseBtn').addEventListener('click', ()=>{
+    currentMass = null;
+    setSelectedChip(null);
+    document.getElementById('currentMassLabel').textContent = '—';
+    hookText.textContent = '';
+    animateTo(0, null);
+  });
+
+  document.getElementById('resetAllBtn').addEventListener('click', ()=>{
+    records.clear();
+    currentMass = null;
+    setSelectedChip(null);
+    document.getElementById('currentMassLabel').textContent = '—';
+    hookText.textContent = '';
+    animateTo(0, null);
+    renderTable();
+    renderGraphAndResult();
+  });
+
+  /* ============ DATA HANDLING ============ */
+  function onSettled(mass, dxCm){
+    const F = (mass/1000) * G;
+    records.set(mass, {mass, F, dxCm});
+    renderTable();
+    renderGraphAndResult();
+  }
+
+  function sortedRecords(){
+    return Array.from(records.values()).sort((a,b)=>a.mass-b.mass);
+  }
+
+  function renderTable(){
+    const body = document.getElementById('dataTableBody');
+    const rows = sortedRecords();
+    if(rows.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada data — gantungkan beban pertama untuk memulai.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${r.mass}</td>
+        <td>${r.F.toFixed(2)}</td>
+        <td>${r.dxCm.toFixed(1)}</td>
+        <td>${r.dxCm.toFixed(1)}</td>
+        <td>${(r.dxCm/100).toFixed(3)}</td>
+      </tr>
+    `).join('');
+  }
+
+  /* ============ REGRESSION ============ */
+  function linearRegression(points){
+    const n = points.length;
+    if(n < 2) return null;
+    let sumX=0,sumY=0,sumXY=0,sumXX=0;
+    points.forEach(p=>{ sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumXX+=p.x*p.x; });
+    const denom = (n*sumXX - sumX*sumX);
+    if(denom === 0) return null;
+    const slope = (n*sumXY - sumX*sumY) / denom;
+    const intercept = (sumY - slope*sumX) / n;
+    // R^2
+    const meanY = sumY/n;
+    let ssTot=0, ssRes=0;
+    points.forEach(p=>{
+      const pred = slope*p.x + intercept;
+      ssTot += (p.y-meanY)*(p.y-meanY);
+      ssRes += (p.y-pred)*(p.y-pred);
+    });
+    const r2 = ssTot === 0 ? 1 : 1 - (ssRes/ssTot);
+    return {slope, intercept, r2};
+  }
+
+  let lastK = null;
+
+  /* ============ GRAPH ============ */
+  const canvas = document.getElementById('graphCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function renderGraphAndResult(){
+    const rows = sortedRecords();
+    const points = rows.map(r => ({x: r.dxCm/100, y: r.F})); // x in meters
+    drawGraph(points);
+
+    const kCard = document.getElementById('kValue');
+    const conclusion = document.getElementById('conclusionText');
+
+    const reg = linearRegression(points);
+    if(!reg){
+      kCard.textContent = '—';
+      lastK = null;
+      conclusion.innerHTML = 'Kumpulkan minimal dua data (dua beban berbeda) agar grafik dan nilai k dapat dihitung.';
+      return;
+    }
+    lastK = reg.slope;
+    kCard.textContent = reg.slope.toFixed(1) + ' N/m';
+    conclusion.innerHTML = `Grafik hubungan antara gaya (F) dan pertambahan panjang (Δx) menunjukkan pola <b>linear</b>, sesuai dengan persamaan Hukum Hooke <b>F = k·Δx</b>. Dari kemiringan (gradien) garis, diperoleh konstanta pegas <b>k ≈ ${reg.slope.toFixed(1)} N/m</b> (R² = ${reg.r2.toFixed(3)}). Semakin besar gaya yang diberikan, semakin besar pula pertambahan panjang pegas — keduanya berbanding lurus selama pegas belum melewati batas elastisitasnya.`;
+  }
+
+  function drawGraph(points){
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#FBF8F1';
+    ctx.fillRect(0,0,W,H);
+
+    const padL = 62, padR = 24, padT = 24, padB = 50;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    let maxX = 0.12, maxY = 3.2;
+    points.forEach(p=>{ maxX = Math.max(maxX, p.x*1.15); maxY = Math.max(maxY, p.y*1.15); });
+
+    function toPx(x,y){
+      return [ padL + (x/maxX)*plotW, padT + plotH - (y/maxY)*plotH ];
+    }
+
+    // grid
+    ctx.strokeStyle = '#DCE3D9';
+    ctx.lineWidth = 1;
+    ctx.font = '11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#56637A';
+    const stepsX = 6, stepsY = 6;
+    for(let i=0;i<=stepsX;i++){
+      const x = padL + (i/stepsX)*plotW;
+      ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke();
+      const val = (i/stepsX)*maxX;
+      ctx.fillText(val.toFixed(2), x-10, padT+plotH+16);
+    }
+    for(let i=0;i<=stepsY;i++){
+      const y = padT + plotH - (i/stepsY)*plotH;
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+      const val = (i/stepsY)*maxY;
+      ctx.fillText(val.toFixed(1), padL-40, y+4);
+    }
+
+    // axes
+    ctx.strokeStyle = '#1F2A3C';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+plotH); ctx.lineTo(padL+plotW, padT+plotH);
+    ctx.stroke();
+
+    // axis labels
+    ctx.fillStyle = '#1F2A3C';
+    ctx.font = '600 12px "IBM Plex Sans", sans-serif';
+    ctx.fillText('Δx (m)', padL + plotW/2 - 20, H - 10);
+    ctx.save();
+    ctx.translate(16, padT + plotH/2 + 20);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText('F (N)', 0, 0);
+    ctx.restore();
+
+    // regression line
+    const reg = linearRegression(points);
+    if(reg){
+      const x0 = 0, x1 = maxX;
+      const y0 = reg.slope*x0 + reg.intercept;
+      const y1 = reg.slope*x1 + reg.intercept;
+      const [px0,py0] = toPx(x0, Math.max(0,y0));
+      const [px1,py1] = toPx(x1, y1);
+      ctx.strokeStyle = '#A6452F';
+      ctx.setLineDash([6,4]);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px0,py0); ctx.lineTo(px1,py1); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // points
+    points.forEach(p=>{
+      const [px,py] = toPx(p.x,p.y);
+      ctx.fillStyle = '#B07C3A';
+      ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+  }
+
+  renderGraphAndResult();
+
+  /* ============ PDF EXPORT ============ */
+  const downloadBtn = document.getElementById('downloadPdfBtn');
+  const downloadBtnDefaultText = downloadBtn.textContent;
+
+  function waitForJsPdf(timeoutMs){
+    return new Promise((resolve, reject)=>{
+      const start = performance.now();
+      (function check(){
+        if(window.jspdf && window.jspdf.jsPDF){ resolve(window.jspdf.jsPDF); return; }
+        if(performance.now() - start > timeoutMs){ reject(new Error('jsPDF gagal dimuat')); return; }
+        setTimeout(check, 150);
+      })();
+    });
+  }
+
+  downloadBtn.addEventListener('click', async ()=>{
+    const rows = sortedRecords();
+    if(rows.length < 2){
+      alert('Lakukan minimal dua percobaan (dua beban berbeda) sebelum mengunduh laporan.');
+      return;
+    }
+
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Menyiapkan PDF…';
+
+    let jsPDF;
+    try{
+      jsPDF = await waitForJsPdf(6000);
+    }catch(err){
+      alert('Modul pembuat PDF gagal dimuat (periksa koneksi internet Anda), lalu coba lagi.');
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = downloadBtnDefaultText;
+      return;
+    }
+
+    try{
+    const doc = new jsPDF({unit:'pt', format:'a4'});
+    const marginX = 48;
+    let y = 56;
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.text('Laporan Praktikum — Hukum Hooke', marginX, y);
+    y += 18;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(11);
+    doc.setTextColor(90,90,90);
+    doc.text('Laboratorium Maya Fisika SMA · Percobaan Elastisitas Pegas', marginX, y);
+    doc.setTextColor(0,0,0);
+    y += 26;
+
+    const name = document.getElementById('stuName').value || '-';
+    const kelas = document.getElementById('stuClass').value || '-';
+    const tanggal = document.getElementById('stuDate').value || '-';
+    doc.setFontSize(11);
+    doc.text(`Nama   : ${name}`, marginX, y); y += 16;
+    doc.text(`Kelas  : ${kelas}`, marginX, y); y += 16;
+    doc.text(`Tanggal: ${tanggal}`, marginX, y); y += 26;
+
+    doc.setFont('helvetica','bold');
+    doc.text('Tabel Data Pengamatan', marginX, y);
+    y += 16;
+
+    const colX = [marginX, marginX+50, marginX+150, marginX+280, marginX+390];
+    const headers = ['No','Massa (g)','F = m·g (N)','Δx (cm)','Δx (m)'];
+    doc.setFontSize(10);
+    headers.forEach((h,i)=>doc.text(h, colX[i], y));
+    y += 4;
+    doc.setLineWidth(0.8);
+    doc.line(marginX, y, marginX+470, y);
+    y += 14;
+
+    doc.setFont('helvetica','normal');
+    rows.forEach((r,i)=>{
+      const vals = [String(i+1), String(r.mass), r.F.toFixed(2), r.dxCm.toFixed(1), (r.dxCm/100).toFixed(3)];
+      vals.forEach((v,ci)=>doc.text(v, colX[ci], y));
+      y += 16;
+    });
+    y += 14;
+
+    // graph image
+    const imgData = canvas.toDataURL('image/png');
+    const imgW = 470;
+    const imgH = imgW * (canvas.height/canvas.width);
+    if(y + imgH > 760){ doc.addPage(); y = 56; }
+    doc.setFont('helvetica','bold');
+    doc.text('Grafik Hubungan Gaya (F) terhadap Δx', marginX, y);
+    y += 10;
+    doc.addImage(imgData, 'PNG', marginX, y, imgW, imgH);
+    y += imgH + 24;
+
+    if(y > 700){ doc.addPage(); y = 56; }
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.text(`Konstanta Pegas (k) = ${lastK ? lastK.toFixed(1) : '-'} N/m`, marginX, y);
+    y += 20;
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10.5);
+    const conclusionPlain = `Grafik hubungan antara gaya (F) dan pertambahan panjang (dx) menunjukkan pola linear, sesuai persamaan Hukum Hooke F = k.dx. Dari kemiringan garis pada grafik, diperoleh konstanta pegas k kira-kira ${lastK ? lastK.toFixed(1) : '-'} N/m. Hal ini menunjukkan bahwa gaya yang bekerja pada pegas berbanding lurus dengan pertambahan panjangnya, selama pegas masih berada dalam batas elastisitasnya.`;
+    const lines = doc.splitTextToSize(conclusionPlain, 470);
+    doc.text(lines, marginX, y);
+    y += lines.length * 13 + 26;
+
+    if(y > 780){ doc.addPage(); y = 56; }
+    doc.setFontSize(9);
+    doc.setTextColor(120,120,120);
+    doc.text('© 2025 Siti Sundari, M.Pd. — Hak cipta dilindungi.', marginX, y);
+    doc.setTextColor(0,0,0);
+
+    // Buat file sebagai Blob, bukan langsung memanggil doc.save(),
+    // supaya kita punya kendali penuh dan selalu bisa menyediakan jalur cadangan
+    // (beberapa pratinjau/sandbox browser memblokir unduhan otomatis).
+    const pdfBlob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
+
+    // Selalu siapkan tautan cadangan terlebih dahulu, sebelum mencoba unduh otomatis.
+    const fallbackHint = document.getElementById('pdfFallbackHint');
+    const fallbackLink = document.getElementById('pdfFallbackLink');
+    fallbackLink.href = blobUrl;
+    fallbackLink.download = 'Laporan_Hukum_Hooke.pdf';
+    fallbackHint.style.display = 'block';
+
+    // Coba unduh otomatis (berhasil pada kebanyakan browser saat file dibuka langsung / di luar sandbox).
+    let autoDownloadWorked = true;
+    try{
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'Laporan_Hukum_Hooke.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }catch(downloadErr){
+      autoDownloadWorked = false;
+      console.warn('Unduhan otomatis gagal, gunakan tautan cadangan.', downloadErr);
+    }
+
+    if(!autoDownloadWorked){
+      alert('Unduhan otomatis tidak didukung di tampilan ini. Gunakan tautan "klik di sini untuk membuka PDF di tab baru" di bawah tombol untuk menyimpan laporan.');
+    }
+    }catch(err){
+      console.error(err);
+      alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+    }finally{
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = downloadBtnDefaultText;
+    }
+  });
+
+  document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+})();
+</script>
+</body>
+</html>
